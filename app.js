@@ -1,0 +1,942 @@
+/**
+ * LOCK MOSKVA - 3D Interactive Lock Landing Page Logic
+ * Built with Three.js & GSAP
+ * Powered by transparent mechanical padlock simulation
+ */
+
+// Global WebGL State for the new padlock mechanism
+let scene, camera, renderer, controls;
+let masterGroup;       // Tilted parent group for lock and key
+let lockGroup, keyGroup, shackleMesh;
+let centralCore, keyholeMesh;
+let keyholeLight;
+
+// Internal mechanism objects
+let keyPins = [];      // Bottom pins (rotate with core)
+let driverPins = [];   // Top pins (stationary vertically, slide in chambers)
+let pinSprings = [];   // Springs at the top (compress)
+let lockingLatch;      // Horizontal locking bolt
+let gearA, gearB;      // Two subtle interlocking gears
+
+// Color themes mapping (Navy background, Turquoise/Mint neon)
+const THEMES = {
+    cyan: {
+        primary: 0x00f5a0,     // Mint/turquoise contour lines matching hero CTA button
+        secondary: 0x00d27a,   // Secondary green
+        lightColor: 0x00f5a0   // Keyhole light color
+    }
+};
+
+let currentTheme = 'cyan';
+let loopTimeline = null;
+
+// Initialize Three.js scene, camera, renderer, and controls
+function initThree() {
+    const container = document.getElementById('canvas-container');
+    if (!container) return;
+    
+    // Scene setup with transparent background
+    scene = new THREE.Scene();
+
+    // Camera setup (Static 3/4 perspective, no zoom-in during animation)
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(3.8, 2.2, 6.0);
+
+    // Renderer setup
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setClearColor(0x000000, 0.0); // Transparent clear color
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    
+    container.innerHTML = '';
+    container.appendChild(renderer.domElement);
+
+    // OrbitControls setup
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0.4, 0); // Lock center focus point
+    controls.minDistance = 3.5;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI / 2 + 0.1;
+
+    // Resize listener
+    window.addEventListener('resize', onWindowResize);
+    
+    createEnvironment();
+    createLock();
+    createKey();
+}
+
+// Create ambient elements: Grid floor and lights
+function createEnvironment() {
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0x0f1c3f, 1.8);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.5);
+    dirLight1.position.set(5, 8, 5);
+    dirLight1.castShadow = true;
+    dirLight1.shadow.mapSize.width = 1024;
+    dirLight1.shadow.mapSize.height = 1024;
+    dirLight1.shadow.bias = -0.001;
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(THEMES[currentTheme].secondary, 1.8);
+    dirLight2.position.set(-5, -3, -2);
+    scene.add(dirLight2);
+
+    // Add a point light inside keyhole
+    keyholeLight = new THREE.PointLight(THEMES[currentTheme].primary, 3.5, 5, 1.5);
+    keyholeLight.position.set(0, 0, 0.51);
+    scene.add(keyholeLight);
+
+    // Cyberpunk grid floor helper removed as per request
+}
+
+// Procedurally create the 3D Transparent Lock with internal mechanisms
+function createLock() {
+    // Create master group tilted slightly back (Z-axis upwards tilt)
+    masterGroup = new THREE.Group();
+    masterGroup.rotation.x = -0.22; // Tilt lock back so keyhole points slightly upwards
+    scene.add(masterGroup);
+
+    lockGroup = new THREE.Group();
+    masterGroup.add(lockGroup);
+
+    // --- MATERIALS ---
+    const glassCasingMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0x0f1f45,           // Richer deep navy blue tint
+        metalness: 0.15,
+        roughness: 0.22,
+        transparent: true,
+        opacity: 0.65,             // Increased opacity to make the lock more visible
+        transmission: 0.55,        // Reduced transmission so it catches reflections/highlights better
+        ior: 1.55,
+        thickness: 1.5,            // Generates thick glass refraction edges
+        side: THREE.DoubleSide,
+        depthWrite: true
+    });
+
+    const contourLineMaterial = new THREE.LineBasicMaterial({
+        color: THEMES[currentTheme].primary,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending
+    });
+
+    const chromeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x8a95a5,
+        metalness: 0.95,
+        roughness: 0.12,
+        envMapIntensity: 1.0
+    });
+
+    const brassMaterial = new THREE.MeshStandardMaterial({
+        color: 0xdca818,
+        metalness: 0.85,
+        roughness: 0.2
+    });
+
+    const copperMaterial = new THREE.MeshStandardMaterial({
+        color: 0xd47a55,
+        metalness: 0.9,
+        roughness: 0.15
+    });
+
+    const glowMaterial = new THREE.MeshBasicMaterial({
+        color: THEMES[currentTheme].primary,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending
+    });
+
+    // --- 1. THE SHACKLE ---
+    const shackleGroup = new THREE.Group();
+    
+    const heelLegGeom = new THREE.CylinderGeometry(0.14, 0.14, 1.3, 16);
+    const leftLeg = new THREE.Mesh(heelLegGeom, chromeMaterial);
+    leftLeg.position.set(0, 0.65, 0); 
+    leftLeg.castShadow = true;
+    shackleGroup.add(leftLeg);
+
+    const toeLegGeom = new THREE.CylinderGeometry(0.14, 0.14, 0.7, 16);
+    const rightLeg = new THREE.Mesh(toeLegGeom, chromeMaterial);
+    rightLeg.position.set(2.4, 0.95, 0); 
+    rightLeg.castShadow = true;
+    shackleGroup.add(rightLeg);
+
+    const shackleTorusGeom = new THREE.TorusGeometry(1.2, 0.14, 16, 64, Math.PI);
+    const shackleTorus = new THREE.Mesh(shackleTorusGeom, chromeMaterial);
+    shackleTorus.position.set(1.2, 1.3, 0);
+    shackleTorus.castShadow = true;
+    shackleGroup.add(shackleTorus);
+
+    shackleMesh = shackleGroup;
+    shackleMesh.position.set(-1.2, 0, 0);
+    lockGroup.add(shackleMesh);
+
+    // --- 2. SINGLE SOLID LOCK CASING ---
+    const casingOuterRadius = 1.8;
+    const casingThickness = 0.8;
+
+    const lockShape = new THREE.Shape();
+    lockShape.moveTo(-1.8, 0.8);
+    lockShape.lineTo(1.8, 0.8);
+    lockShape.lineTo(1.8, 0);
+    lockShape.absarc(0, 0, casingOuterRadius, 0, Math.PI, true);
+    lockShape.lineTo(-1.8, 0.8);
+    lockShape.closePath();
+
+    const extrudeSettings = { depth: casingThickness, bevelEnabled: true, bevelSegments: 4, steps: 1, bevelSize: 0.03, bevelThickness: 0.03 };
+    const casingGeom = new THREE.ExtrudeGeometry(lockShape, extrudeSettings);
+    casingGeom.center();
+
+    const casingGlass = new THREE.Mesh(casingGeom, glassCasingMaterial);
+    casingGlass.castShadow = true;
+    casingGlass.receiveShadow = true;
+    casingGlass.position.set(0, 0, 0);
+    lockGroup.add(casingGlass);
+
+    const edges = new THREE.EdgesGeometry(casingGeom, 25);
+    const contourLines = new THREE.LineSegments(edges, contourLineMaterial);
+    contourLines.position.set(0, 0, 0);
+    lockGroup.add(contourLines);
+
+    // --- 3. CENTRAL CYLINDER PLUG CORE ---
+    centralCore = new THREE.Group();
+    centralCore.position.set(0, 0, 0);
+
+    const coreGlassMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0x2e3b52,
+        metalness: 0.8,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.35,
+        transmission: 0.7,
+        ior: 1.4
+    });
+
+    const coreGeom = new THREE.CylinderGeometry(0.7, 0.7, 0.9, 32);
+    coreGeom.rotateX(Math.PI / 2);
+    const coreMesh = new THREE.Mesh(coreGeom, coreGlassMaterial);
+    centralCore.add(coreMesh);
+
+    const coreGlowRingGeom = new THREE.RingGeometry(0.55, 0.62, 32);
+    const coreGlowRing = new THREE.Mesh(coreGlowRingGeom, glowMaterial);
+    coreGlowRing.position.z = 0.46;
+    centralCore.add(coreGlowRing);
+    centralCore.userData.glow = coreGlowRing;
+
+    const keyholeShape = new THREE.Shape();
+    keyholeShape.moveTo(0.06, -0.08);
+    keyholeShape.absarc(0, -0.12, 0.12, -Math.PI/6, Math.PI + Math.PI/6, false); 
+    keyholeShape.lineTo(-0.08, 0.2);
+    keyholeShape.lineTo(0.08, 0.2);
+    keyholeShape.closePath();
+
+    const khExtSettings = { depth: 0.3, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.01, bevelThickness: 0.01 };
+    const keyholeGeom = new THREE.ExtrudeGeometry(keyholeShape, khExtSettings);
+    keyholeGeom.center();
+    
+    const keyholeMat = new THREE.MeshStandardMaterial({
+        color: 0x05070e,
+        metalness: 0.2,
+        roughness: 0.8
+    });
+    keyholeMesh = new THREE.Mesh(keyholeGeom, keyholeMat);
+    keyholeMesh.position.set(0, 0, 0.35);
+    centralCore.add(keyholeMesh);
+
+    lockGroup.add(centralCore);
+
+    // --- 4. INTERNAL MECHANICS: PIN TUMBLER SYSTEM ---
+    const pinsContainer = new THREE.Group();
+    lockGroup.add(pinsContainer);
+
+    const pinZOffsets = [0.2, 0.0, -0.2, -0.4];
+    const initialKeyPinHeights = [0.18, 0.25, 0.10, 0.22];
+    
+    pinZOffsets.forEach((zVal, idx) => {
+        const kpHeight = initialKeyPinHeights[idx];
+        const kpGeom = new THREE.CylinderGeometry(0.055, 0.055, kpHeight, 16);
+        kpGeom.translate(0, kpHeight / 2, 0);
+        
+        const kpMesh = new THREE.Mesh(kpGeom, brassMaterial);
+        kpMesh.position.set(0, -0.08, zVal);
+        centralCore.add(kpMesh);
+        keyPins.push(kpMesh);
+
+        const dpHeight = 0.35;
+        const dpGeom = new THREE.CylinderGeometry(0.055, 0.055, dpHeight, 16);
+        dpGeom.translate(0, dpHeight / 2, 0);
+        
+        const dpMesh = new THREE.Mesh(dpGeom, chromeMaterial);
+        const initialDpY = -0.08 + kpHeight;
+        dpMesh.position.set(0, initialDpY, zVal);
+        pinsContainer.add(dpMesh);
+        driverPins.push(dpMesh);
+
+        const springGroup = new THREE.Group();
+        springGroup.position.set(0, initialDpY + dpHeight, zVal);
+        
+        const springLineGeom = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 8, 4, true);
+        const springMat = new THREE.MeshStandardMaterial({
+            color: 0x475569,
+            wireframe: true
+        });
+        const springMesh = new THREE.Mesh(springLineGeom, springMat);
+        springMesh.position.y = 0.2;
+        springGroup.add(springMesh);
+        pinsContainer.add(springGroup);
+        
+        pinSprings.push({
+            group: springGroup,
+            mesh: springMesh,
+            initialY: initialDpY + dpHeight,
+            maxHeight: 0.4
+        });
+    });
+
+    keyPins.forEach((kp, idx) => {
+        const delta = 0.43 - initialKeyPinHeights[idx];
+        kp.userData.targetDelta = delta;
+        kp.userData.initialY = kp.position.y;
+        
+        if (driverPins[idx]) {
+            driverPins[idx].userData.initialY = driverPins[idx].position.y;
+        }
+    });
+
+    // --- 5. INTERNAL MECHANICS: LOCKING LATCH BOLT ---
+    const latchGeom = new THREE.BoxGeometry(0.55, 0.12, 0.16);
+    lockingLatch = new THREE.Mesh(latchGeom, chromeMaterial);
+    lockingLatch.position.set(0.85, 0.75, 0); 
+    pinsContainer.add(lockingLatch);
+
+    // --- 6. INTERNAL MECHANICS: TWO SUBTLE INTERLOCKING GEARS ---
+    gearA = createProceduralGear(0.35, 0.1, 10, copperMaterial);
+    gearA.position.set(0, 0, -0.42);
+    centralCore.add(gearA);
+
+    gearB = createProceduralGear(0.35, 0.1, 10, brassMaterial);
+    gearB.position.set(0, 0.70, -0.42);
+    pinsContainer.add(gearB);
+}
+
+// Procedural gear model generator helper
+function createProceduralGear(radius, thickness, teethCount, material) {
+    const gearGroup = new THREE.Group();
+
+    const bodyGeom = new THREE.CylinderGeometry(radius - 0.10, radius - 0.10, thickness, 32);
+    bodyGeom.rotateX(Math.PI / 2);
+    const body = new THREE.Mesh(bodyGeom, material);
+    body.castShadow = true;
+    body.receiveShadow = true;
+    gearGroup.add(body);
+
+    const axleGeom = new THREE.CylinderGeometry(0.06, 0.06, thickness + 0.04, 16);
+    axleGeom.rotateX(Math.PI / 2);
+    const axleMat = new THREE.MeshStandardMaterial({ color: 0x708090, metalness: 0.9, roughness: 0.1 });
+    const axle = new THREE.Mesh(axleGeom, axleMat);
+    gearGroup.add(axle);
+
+    const toothGeom = new THREE.BoxGeometry(0.08, thickness, 0.18);
+    for (let i = 0; i < teethCount; i++) {
+        const theta = (i / teethCount) * Math.PI * 2;
+        const tooth = new THREE.Mesh(toothGeom, material);
+        tooth.position.set(Math.cos(theta) * (radius - 0.05), Math.sin(theta) * (radius - 0.05), 0);
+        tooth.rotation.z = theta;
+        tooth.castShadow = true;
+        gearGroup.add(tooth);
+    }
+
+    return gearGroup;
+}
+
+// Procedurally create the 3D Futuristic Key
+function createKey() {
+    keyGroup = new THREE.Group();
+    keyGroup.position.set(0, -0.04, 4.5);
+    keyGroup.rotation.set(0, 0, 0);
+    masterGroup.add(keyGroup); 
+
+    const chromeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x9fb0c6,
+        metalness: 0.98,
+        roughness: 0.08,
+        envMapIntensity: 1.2
+    });
+
+    const glowMaterial = new THREE.MeshBasicMaterial({
+        color: THEMES[currentTheme].primary,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending
+    });
+
+    // 1. KEY HEAD
+    const hexShape = new THREE.Shape();
+    const hexRadius = 0.55;
+    for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const x = Math.cos(angle) * hexRadius;
+        const y = Math.sin(angle) * hexRadius;
+        if (i === 0) hexShape.moveTo(x, y);
+        else hexShape.lineTo(x, y);
+    }
+    hexShape.closePath();
+
+    const holePath = new THREE.Path();
+    holePath.absarc(0, 0, 0.25, 0, Math.PI * 2, true);
+    hexShape.holes.push(holePath);
+
+    const keyExtSettings = { depth: 0.12, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.02, bevelThickness: 0.02 };
+    const keyHeadGeom = new THREE.ExtrudeGeometry(hexShape, keyExtSettings);
+    keyHeadGeom.center();
+    const keyHead = new THREE.Mesh(keyHeadGeom, chromeMaterial);
+    keyHead.castShadow = true;
+    keyHead.position.z = 0.75; 
+    keyHead.rotation.y = Math.PI / 2; 
+    keyGroup.add(keyHead);
+
+    const headGlowRingGeom = new THREE.TorusGeometry(0.26, 0.03, 8, 32);
+    const headGlowRing = new THREE.Mesh(headGlowRingGeom, glowMaterial);
+    headGlowRing.position.z = 0.75;
+    headGlowRing.rotation.y = Math.PI / 2; 
+    keyGroup.add(headGlowRing);
+
+    // 2. KEY SHAFT
+    const shaftGeom = new THREE.CylinderGeometry(0.07, 0.07, 1.5, 16);
+    shaftGeom.rotateX(Math.PI / 2);
+    const keyShaft = new THREE.Mesh(shaftGeom, chromeMaterial);
+    keyShaft.position.z = 0.0;
+    keyShaft.castShadow = true;
+    keyGroup.add(keyShaft);
+
+    // Glow laser channel
+    const laserGeom = new THREE.CylinderGeometry(0.02, 0.02, 1.2, 8);
+    laserGeom.rotateX(Math.PI / 2);
+    const keyLaser = new THREE.Mesh(laserGeom, glowMaterial);
+    keyLaser.position.set(0, -0.06, 0.0); 
+    keyGroup.add(keyLaser);
+
+    // 3. KEY TEETH
+    const teethGroup = new THREE.Group();
+    teethGroup.position.set(0, 0, 0); 
+
+    const pinZOffsets = [0.2, 0.0, -0.2, -0.4];
+    const initialKeyPinHeights = [0.18, 0.25, 0.10, 0.22];
+    
+    pinZOffsets.forEach((zOff, idx) => {
+        const liftNeeded = 0.43 - initialKeyPinHeights[idx];
+        
+        const toothH = liftNeeded + 0.08;
+        const toothGeom = new THREE.BoxGeometry(0.08, toothH, 0.15);
+        toothGeom.translate(0, toothH / 2, 0); 
+
+        const tooth = new THREE.Mesh(toothGeom, chromeMaterial);
+        tooth.position.set(0, 0.07, zOff - 0.65);
+        teethGroup.add(tooth);
+
+        const toothLaserGeom = new THREE.BoxGeometry(0.09, 0.05, 0.05);
+        const toothLaser = new THREE.Mesh(toothLaserGeom, glowMaterial);
+        toothLaser.position.set(0, toothH - 0.02, zOff - 0.65);
+        teethGroup.add(toothLaser);
+    });
+
+    keyGroup.add(teethGroup);
+}
+
+// Window resizing callback
+function onWindowResize() {
+    const container = document.getElementById('canvas-container');
+    if (!container || !renderer || !camera) return;
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+}
+
+// Frame loop animation callback
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (!renderer || !scene || !camera) return;
+
+    // OrbitControls damping
+    if (controls) controls.update();
+
+    // Slow idle rotation of lock group (if not in main GSAP timeline)
+    if (lockGroup && (!lockGroup.userData || !lockGroup.userData.isAnimating)) {
+        lockGroup.rotation.y = Math.sin(Date.now() * 0.0005) * 0.06;
+        lockGroup.rotation.x = Math.cos(Date.now() * 0.0005) * 0.03;
+    }
+
+    // Render step
+    renderer.render(scene, camera);
+}
+
+// Configure and run the infinite GSAP loop timeline
+function startLockLoop() {
+    if (loopTimeline) return;
+
+    lockGroup.userData.isAnimating = true;
+
+    loopTimeline = gsap.timeline({
+        repeat: -1, 
+        yoyo: false
+    });
+
+    // 1. INITIAL STATE & FOCUS PREP
+    loopTimeline.set(camera.position, { x: 3.8, y: 2.2, z: 6.0 });
+    loopTimeline.set(keyGroup.position, { x: 0, y: -0.04, z: 4.5 });
+    loopTimeline.set(keyGroup.rotation, { x: 0, y: 0, z: 0 });
+    loopTimeline.set(centralCore.rotation, { x: 0, y: 0, z: 0 });
+    loopTimeline.set(shackleMesh.position, { x: -1.2, y: 0, z: 0 });
+    loopTimeline.set(shackleMesh.rotation, { x: 0, y: 0, z: 0 });
+    loopTimeline.set(lockingLatch.position, { x: 0.85, y: 0.75, z: 0 }); 
+    loopTimeline.set(gearB.rotation, { x: 0, y: 0, z: 0 });
+    loopTimeline.set(keyholeLight, { intensity: 3.5, distance: 5 });
+
+    keyPins.forEach((kp, idx) => {
+        loopTimeline.set(kp.position, { y: kp.userData.initialY });
+    });
+    driverPins.forEach((dp, idx) => {
+        loopTimeline.set(dp.position, { y: dp.userData.initialY });
+    });
+    pinSprings.forEach((spring) => {
+        loopTimeline.set(spring.group.position, { y: spring.group.position.y });
+        loopTimeline.set(spring.mesh.scale, { y: 1.0 });
+    });
+
+    // 2. UNLOCK PHASE
+    loopTimeline.to(keyGroup.position, {
+        x: 0,
+        y: -0.04,
+        z: 1.1,
+        duration: 1.5,
+        ease: 'power2.out'
+    });
+
+    loopTimeline.to(keyGroup.position, {
+        z: 0.65,
+        duration: 1.2,
+        ease: 'power2.inOut',
+        onComplete: () => {
+            triggerShockwave();
+        }
+    });
+
+    keyPins.forEach((kp, idx) => {
+        const delta = kp.userData.targetDelta;
+        
+        loopTimeline.to(kp.position, {
+            y: kp.userData.initialY + delta,
+            duration: 1.2,
+            ease: 'power2.inOut'
+        }, '<');
+
+        const dp = driverPins[idx];
+        const initialDpY = dp.userData.initialY;
+        loopTimeline.to(dp.position, {
+            y: initialDpY + delta,
+            duration: 1.2,
+            ease: 'power2.inOut'
+        }, '<');
+
+        const spring = pinSprings[idx];
+        loopTimeline.to(spring.group.position, {
+            y: spring.group.position.y + delta,
+            duration: 1.2,
+            ease: 'power2.inOut'
+        }, '<');
+
+        const scaleFactor = (0.4 - delta) / 0.4;
+        loopTimeline.to(spring.mesh.scale, {
+            y: scaleFactor,
+            duration: 1.2,
+            ease: 'power2.inOut'
+        }, '<');
+    });
+
+    loopTimeline.to({}, { duration: 0.4 });
+
+    loopTimeline.to([keyGroup.rotation, centralCore.rotation], {
+        z: Math.PI / 2, 
+        duration: 1.2,
+        ease: 'power2.inOut'
+    });
+
+    loopTimeline.to(gearB.rotation, {
+        z: -Math.PI / 2,
+        duration: 1.2,
+        ease: 'power2.inOut'
+    }, '<');
+
+    loopTimeline.to(lockingLatch.position, {
+        x: 0.35,
+        duration: 1.2,
+        ease: 'power2.inOut'
+    }, '<');
+
+    loopTimeline.to(shackleMesh.position, {
+        y: 0.8,
+        duration: 0.7,
+        ease: 'power2.out'
+    }, '+=0.1');
+
+    loopTimeline.to(shackleMesh.rotation, {
+        y: Math.PI / 3.5,
+        duration: 0.9,
+        ease: 'power2.inOut'
+    });
+
+    loopTimeline.to(keyholeLight, {
+        intensity: 5.5,
+        distance: 7,
+        duration: 0.5
+    }, '-=0.5');
+
+    // 3. HOLD OPEN VIEW
+    loopTimeline.to({}, { duration: 3.5 }); 
+
+    // 4. LOCKING/RESET PHASE
+    loopTimeline.to(shackleMesh.rotation, {
+        y: 0,
+        duration: 0.8,
+        ease: 'power2.inOut'
+    });
+
+    loopTimeline.to(shackleMesh.position, {
+        y: 0,
+        duration: 0.7,
+        ease: 'power2.inOut'
+    });
+
+    loopTimeline.to(keyholeLight, {
+        intensity: 3.5,
+        distance: 5,
+        duration: 0.7
+    }, '<');
+
+    loopTimeline.to([keyGroup.rotation, centralCore.rotation], {
+        z: 0,
+        duration: 1.2,
+        ease: 'power2.inOut'
+    }, '+=0.2');
+
+    loopTimeline.to(gearB.rotation, {
+        z: 0,
+        duration: 1.2,
+        ease: 'power2.inOut'
+    }, '<');
+
+    loopTimeline.to(lockingLatch.position, {
+        x: 0.85, 
+        duration: 1.2,
+        ease: 'power2.inOut'
+    }, '<');
+
+    loopTimeline.to(keyGroup.position, {
+        z: 1.1,
+        duration: 1.0,
+        ease: 'power2.inOut'
+    });
+
+    keyPins.forEach((kp, idx) => {
+        loopTimeline.to(kp.position, {
+            y: kp.userData.initialY,
+            duration: 1.0,
+            ease: 'power2.inOut'
+        }, '<');
+
+        const dp = driverPins[idx];
+        loopTimeline.to(dp.position, {
+            y: dp.userData.initialY,
+            duration: 1.0,
+            ease: 'power2.inOut'
+        }, '<');
+
+        const spring = pinSprings[idx];
+        loopTimeline.to(spring.group.position, {
+            y: spring.initialY,
+            duration: 1.0,
+            ease: 'power2.inOut'
+        }, '<');
+
+        loopTimeline.to(spring.mesh.scale, {
+            y: 1.0,
+            duration: 1.0,
+            ease: 'power2.inOut'
+        }, '<');
+    });
+
+    loopTimeline.to(keyGroup.position, {
+        x: 0,
+        y: -0.04,
+        z: 4.5,
+        duration: 1.4,
+        ease: 'power2.out'
+    });
+
+    // 5. HOLD LOCKED VIEW
+    loopTimeline.to({}, { duration: 2.5 }); 
+}
+
+// Emits an expanding fading ripple ring from the keyhole
+function triggerShockwave() {
+    const shockwaveColor = THEMES[currentTheme].primary;
+    
+    const geom = new THREE.RingGeometry(0.1, 0.15, 32);
+    const mat = new THREE.MeshBasicMaterial({
+        color: shockwaveColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set(0, -0.04, 0.54);
+    scene.add(mesh);
+
+    gsap.to(mesh.scale, {
+        x: 25,
+        y: 25,
+        z: 1,
+        duration: 1.2,
+        ease: 'power2.out'
+    });
+
+    gsap.to(mesh.material, {
+        opacity: 0,
+        duration: 1.2,
+        ease: 'power2.out',
+        onComplete: () => {
+            scene.remove(mesh);
+            geom.dispose();
+            mat.dispose();
+        }
+    });
+}
+
+
+let currentReviewsCount = 3;
+const reviewsIncrement = 6;
+
+function renderReviews() {
+    const container = document.getElementById('reviews-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const reviewsToShow = reviewsData.slice(0, currentReviewsCount);
+
+    reviewsToShow.forEach(review => {
+        const card = document.createElement('div');
+        card.className = 'review-card';
+
+        let stars = '';
+        for (let i = 0; i < 5; i++) {
+            stars += i < review.rating ? '★' : '☆';
+        }
+
+        card.innerHTML = `
+            <div class="review-header">
+                <div class="review-user">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-meta">
+                        <span class="user-name">${review.name}</span>
+                        <span class="user-district">${review.district}</span>
+                    </div>
+                </div>
+                <div class="rating-stars">${stars}</div>
+            </div>
+            <p class="review-text">${review.text}</p>
+        `;
+        container.appendChild(card);
+    });
+
+    const loadMoreBtn = document.getElementById('load-more-reviews');
+    if (loadMoreBtn) {
+        if (currentReviewsCount >= reviewsData.length) {
+            loadMoreBtn.classList.add('hidden');
+        } else {
+            loadMoreBtn.classList.remove('hidden');
+        }
+    }
+}
+
+function initReviews() {
+    renderReviews();
+
+    const loadMoreBtn = document.getElementById('load-more-reviews');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', () => {
+            currentReviewsCount += reviewsIncrement;
+            renderReviews();
+        });
+    }
+
+    const writeReviewBtn = document.getElementById('write-review-btn');
+    const reviewModal = document.getElementById('review-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+
+    if (writeReviewBtn && reviewModal) {
+        writeReviewBtn.addEventListener('click', () => {
+            reviewModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+    }
+
+    if (modalCloseBtn && reviewModal) {
+        modalCloseBtn.addEventListener('click', () => {
+            reviewModal.classList.add('hidden');
+            document.body.style.overflow = '';
+            // Reset form
+            document.getElementById('add-review-form').classList.remove('hidden');
+            document.getElementById('modal-success-msg').classList.add('hidden');
+        });
+    }
+
+    // Modal Star Rating
+    const starItems = document.querySelectorAll('.star-item');
+    const ratingInput = document.getElementById('review-rating');
+
+    starItems.forEach(star => {
+        star.addEventListener('click', () => {
+            const val = parseInt(star.getAttribute('data-value'));
+            ratingInput.value = val;
+
+            starItems.forEach(s => {
+                const sVal = parseInt(s.getAttribute('data-value'));
+                if (sVal <= val) {
+                    s.classList.add('gold');
+                } else {
+                    s.classList.remove('gold');
+                }
+            });
+        });
+    });
+
+    // Form submit
+    const addReviewForm = document.getElementById('add-review-form');
+    const modalSuccessMsg = document.getElementById('modal-success-msg');
+
+    if (addReviewForm) {
+        addReviewForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const nameVal = document.getElementById('review-name').value;
+            const districtVal = document.getElementById('review-district').value;
+            const ratingVal = parseInt(ratingInput.value);
+            const textVal = document.getElementById('review-text').value;
+
+            // Prepend new review
+            reviewsData.unshift({
+                name: nameVal,
+                district: districtVal,
+                rating: ratingVal,
+                text: textVal,
+                date: "Только что"
+            });
+
+            addReviewForm.classList.add('hidden');
+            modalSuccessMsg.classList.remove('hidden');
+
+            // Re-render
+            currentReviewsCount = Math.max(currentReviewsCount, 3);
+            renderReviews();
+
+            // Reset
+            addReviewForm.reset();
+            starItems.forEach(s => s.classList.add('gold'));
+            ratingInput.value = 5;
+        });
+    }
+}
+
+function initFloatingBar() {
+    const floatingCallBar = document.getElementById('floating-call-bar');
+    const problemsSection = document.querySelector('.problems-section');
+    
+    function checkScroll() {
+        if (!floatingCallBar) return;
+        
+        let triggerPoint = 0;
+        if (problemsSection) {
+            // Показываем кнопку, когда доскроллили до заголовка "ЕСЛИ У ВАС"
+            triggerPoint = problemsSection.offsetTop - 80;
+        } else {
+            const heroSection = document.querySelector('.hero-section');
+            if (heroSection) {
+                triggerPoint = heroSection.offsetHeight - 100;
+            }
+        }
+        
+        let shouldShow = window.scrollY > triggerPoint;
+        
+        // Скрываем плавающую кнопку, если она перекрывает телефон в футере
+        const footerPhone = document.querySelector('.footer-phone-block .phone-number');
+        if (footerPhone) {
+            const phoneRect = footerPhone.getBoundingClientRect();
+            // Если верхняя граница номера телефона в футере поднялась в область видимости
+            if (phoneRect.top < window.innerHeight - 10) {
+                shouldShow = false;
+            }
+        }
+        
+        if (shouldShow) {
+            floatingCallBar.classList.add('visible');
+        } else {
+            floatingCallBar.classList.remove('visible');
+        }
+    }
+    
+    window.addEventListener('scroll', checkScroll);
+    checkScroll(); // Проверяем сразу при загрузке
+}
+
+function initServicesAccordion() {
+    const headers = document.querySelectorAll('.accordion-header');
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const item = header.parentElement;
+            const content = item.querySelector('.accordion-content');
+            const isOpen = item.classList.contains('active');
+            
+            if (isOpen) {
+                item.classList.remove('active');
+                content.style.maxHeight = null;
+                header.setAttribute('aria-expanded', 'false');
+            } else {
+                // Close other accordion items
+                document.querySelectorAll('.accordion-item').forEach(otherItem => {
+                    otherItem.classList.remove('active');
+                    const otherContent = otherItem.querySelector('.accordion-content');
+                    if (otherContent) otherContent.style.maxHeight = null;
+                    const otherHeader = otherItem.querySelector('.accordion-header');
+                    if (otherHeader) otherHeader.setAttribute('aria-expanded', 'false');
+                });
+
+                item.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + "px";
+                header.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+}
+
+// Window OnLoad Initializer
+window.addEventListener('load', () => {
+    initThree();
+    startLockLoop();
+    initReviews();
+    initFloatingBar();
+    initServicesAccordion();
+    animate();
+});
