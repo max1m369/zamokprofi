@@ -136,6 +136,13 @@ function createLock() {
         envMapIntensity: 1.0
     });
 
+    const bronzeMaterial = new THREE.MeshStandardMaterial({
+        color: 0xcd7f32,
+        metalness: 0.95,
+        roughness: 0.22,
+        envMapIntensity: 1.2
+    });
+
     const brassMaterial = new THREE.MeshStandardMaterial({
         color: 0xdca818,
         metalness: 0.85,
@@ -158,26 +165,26 @@ function createLock() {
     // --- 1. THE SHACKLE ---
     const shackleGroup = new THREE.Group();
     
-    const heelLegGeom = new THREE.CylinderGeometry(0.14, 0.14, 1.3, 16);
-    const leftLeg = new THREE.Mesh(heelLegGeom, chromeMaterial);
+    const heelLegGeom = new THREE.CylinderGeometry(0.18, 0.18, 1.3, 16);
+    const leftLeg = new THREE.Mesh(heelLegGeom, bronzeMaterial);
     leftLeg.position.set(0, 0.65, 0); 
     leftLeg.castShadow = true;
     shackleGroup.add(leftLeg);
 
-    const toeLegGeom = new THREE.CylinderGeometry(0.14, 0.14, 0.7, 16);
-    const rightLeg = new THREE.Mesh(toeLegGeom, chromeMaterial);
-    rightLeg.position.set(2.4, 0.95, 0); 
+    const toeLegGeom = new THREE.CylinderGeometry(0.18, 0.18, 0.7, 16);
+    const rightLeg = new THREE.Mesh(toeLegGeom, bronzeMaterial);
+    rightLeg.position.set(2.6, 0.95, 0); 
     rightLeg.castShadow = true;
     shackleGroup.add(rightLeg);
 
-    const shackleTorusGeom = new THREE.TorusGeometry(1.2, 0.14, 16, 64, Math.PI);
-    const shackleTorus = new THREE.Mesh(shackleTorusGeom, chromeMaterial);
-    shackleTorus.position.set(1.2, 1.3, 0);
+    const shackleTorusGeom = new THREE.TorusGeometry(1.3, 0.18, 16, 64, Math.PI);
+    const shackleTorus = new THREE.Mesh(shackleTorusGeom, bronzeMaterial);
+    shackleTorus.position.set(1.3, 1.3, 0);
     shackleTorus.castShadow = true;
     shackleGroup.add(shackleTorus);
 
     shackleMesh = shackleGroup;
-    shackleMesh.position.set(-1.2, 0, 0);
+    shackleMesh.position.set(-1.3, 0, 0);
     lockGroup.add(shackleMesh);
 
     // --- 2. SINGLE SOLID LOCK CASING ---
@@ -365,10 +372,10 @@ function createKey() {
     keyGroup.rotation.set(0, 0, 0);
     masterGroup.add(keyGroup); 
 
-    const chromeMaterial = new THREE.MeshStandardMaterial({
-        color: 0x9fb0c6,
-        metalness: 0.98,
-        roughness: 0.08,
+    const bronzeKeyMaterial = new THREE.MeshStandardMaterial({
+        color: 0xcd7f32,
+        metalness: 0.95,
+        roughness: 0.22,
         envMapIntensity: 1.2
     });
 
@@ -398,7 +405,7 @@ function createKey() {
     const keyExtSettings = { depth: 0.12, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.02, bevelThickness: 0.02 };
     const keyHeadGeom = new THREE.ExtrudeGeometry(hexShape, keyExtSettings);
     keyHeadGeom.center();
-    const keyHead = new THREE.Mesh(keyHeadGeom, chromeMaterial);
+    const keyHead = new THREE.Mesh(keyHeadGeom, bronzeKeyMaterial);
     keyHead.castShadow = true;
     keyHead.position.z = 0.75; 
     keyHead.rotation.y = Math.PI / 2; 
@@ -413,7 +420,7 @@ function createKey() {
     // 2. KEY SHAFT
     const shaftGeom = new THREE.CylinderGeometry(0.07, 0.07, 1.5, 16);
     shaftGeom.rotateX(Math.PI / 2);
-    const keyShaft = new THREE.Mesh(shaftGeom, chromeMaterial);
+    const keyShaft = new THREE.Mesh(shaftGeom, bronzeKeyMaterial);
     keyShaft.position.z = 0.0;
     keyShaft.castShadow = true;
     keyGroup.add(keyShaft);
@@ -438,8 +445,8 @@ function createKey() {
         const toothH = liftNeeded + 0.08;
         const toothGeom = new THREE.BoxGeometry(0.08, toothH, 0.15);
         toothGeom.translate(0, toothH / 2, 0); 
-
-        const tooth = new THREE.Mesh(toothGeom, chromeMaterial);
+ 
+        const tooth = new THREE.Mesh(toothGeom, bronzeKeyMaterial);
         tooth.position.set(0, 0.07, zOff - 0.65);
         teethGroup.add(tooth);
 
@@ -496,7 +503,7 @@ function startLockLoop() {
     loopTimeline.set(keyGroup.position, { x: 0, y: -0.04, z: 4.5 });
     loopTimeline.set(keyGroup.rotation, { x: 0, y: 0, z: 0 });
     loopTimeline.set(centralCore.rotation, { x: 0, y: 0, z: 0 });
-    loopTimeline.set(shackleMesh.position, { x: -1.2, y: 0, z: 0 });
+    loopTimeline.set(shackleMesh.position, { x: -1.3, y: 0, z: 0 });
     loopTimeline.set(shackleMesh.rotation, { x: 0, y: 0, z: 0 });
     loopTimeline.set(lockingLatch.position, { x: 0.85, y: 0.75, z: 0 }); 
     loopTimeline.set(gearB.rotation, { x: 0, y: 0, z: 0 });
@@ -931,6 +938,49 @@ function initServicesAccordion() {
     });
 }
 
+function initMapInteractivity() {
+    const districts = document.querySelectorAll('.map-district');
+    const statusText = document.getElementById('map-hover-status');
+    
+    if (!statusText) return;
+    
+    const districtNames = {
+        'district-mitino': 'Митино — приеду за 15 минут',
+        'district-kurkino': 'Куркино — приеду за 15 минут',
+        'district-stushino': 'Северное Тушино — приеду за 15 минут',
+        'district-ytushino': 'Южное Тушино — приеду за 15 минут',
+        'district-pokrovskoe': 'Покровское-Стрешнево — приеду за 15 минут',
+        'district-strogino': 'Строгино — приеду за 15 минут',
+        'district-schukino': 'Щукино — приеду за 15 минут',
+        'district-horoshevo': 'Хорошёво-Мнёвники — приеду за 20 минут',
+        'district-khimki': 'Химки — приеду за 20 минут',
+        'district-putilkovo': 'Путилково — приеду за 20 минут',
+        'district-yurlovo': 'Юрлово — приеду за 25 минут',
+        'district-saburovo': 'Сабурово — приеду за 25 минут',
+        'district-aristovo': 'Аристово — приеду за 25 минут',
+        'district-angelovo': 'Ангелово — приеду за 20 минут',
+        'district-krasnogorsk': 'Красногорск — приеду за 20 минут',
+        'district-opaliha': 'Опалиха — приеду за 25 минут'
+    };
+    
+    districts.forEach(d => {
+        const id = d.id;
+        const name = districtNames[id] || 'Близлежащий район';
+        const isAdjacent = d.classList.contains('adjacent-district');
+        d.addEventListener('mouseenter', () => {
+            statusText.textContent = name;
+            statusText.style.fill = isAdjacent ? '#ffd200' : '#00f0ff';
+        });
+        d.addEventListener('mouseleave', () => {
+            statusText.textContent = 'Выберите район для вызова мастера';
+            statusText.style.fill = '';
+        });
+        d.addEventListener('click', () => {
+            window.location.href = 'tel:+79296698855';
+        });
+    });
+}
+
 // Window OnLoad Initializer
 window.addEventListener('load', () => {
     initThree();
@@ -938,5 +988,6 @@ window.addEventListener('load', () => {
     initReviews();
     initFloatingBar();
     initServicesAccordion();
+    initMapInteractivity();
     animate();
 });
