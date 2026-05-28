@@ -21,9 +21,9 @@ let gearA, gearB;      // Two subtle interlocking gears
 // Color themes mapping (Navy background, Turquoise/Mint neon)
 const THEMES = {
     cyan: {
-        primary: 0x00f5a0,     // Mint/turquoise contour lines matching hero CTA button
-        secondary: 0x00d27a,   // Secondary green
-        lightColor: 0x00f5a0   // Keyhole light color
+        primary: 0x00b2ff,     // Sci-fi neon blue matching the CTA gradient side
+        secondary: 0xffd875,   // Warm yellow sunlight backlight
+        lightColor: 0x00b2ff   // Keyhole light color
     }
 };
 
@@ -40,7 +40,7 @@ function initThree() {
 
     // Camera setup (Static 3/4 perspective, no zoom-in during animation)
     camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-    camera.position.set(3.8, 2.2, 6.0);
+    camera.position.set(3.8, 1.8, 7.3);
 
     // Renderer setup
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -78,17 +78,31 @@ function createEnvironment() {
     const ambientLight = new THREE.AmbientLight(0x0f1c3f, 1.8);
     scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.5);
-    dirLight1.position.set(5, 8, 5);
+    const dirLight1 = new THREE.DirectionalLight(0xfff5ea, 2.2); // Warm white light to prevent washed-out colors
+    dirLight1.position.set(-5, 5, 8); // Moved in front of the lock (Z=8) and reflected horizontally (X=-5)
     dirLight1.castShadow = true;
     dirLight1.shadow.mapSize.width = 1024;
     dirLight1.shadow.mapSize.height = 1024;
     dirLight1.shadow.bias = -0.001;
     scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(THEMES[currentTheme].secondary, 1.8);
-    dirLight2.position.set(-5, -3, -2);
+    const dirLight2 = new THREE.DirectionalLight(THEMES[currentTheme].secondary, 2.0); // Slightly stronger backlight for richer warm reflections
+    dirLight2.position.set(5, -3, -2); // Reflected horizontally (X=5)
     scene.add(dirLight2);
+
+    // HemisphereLight simulating sky/ground ambient reflection (provides beautiful gradients on metallic surface)
+    const hemiLight = new THREE.HemisphereLight(0xffeebb, 0x0a1428, 2.2);
+    scene.add(hemiLight);
+
+    // Side specular highlight light (paints sharp specular reflection on key and shackle)
+    const dirLight3 = new THREE.DirectionalLight(0xffffff, 1.8);
+    dirLight3.position.set(8, 2, 4);
+    scene.add(dirLight3);
+
+    // Cyberpunk themed cyan reflection light from bottom-left (creates stunning cyan rim reflections on the bottom of the shackle and key)
+    const dirLight4 = new THREE.DirectionalLight(THEMES[currentTheme].primary, 1.8);
+    dirLight4.position.set(-3, -6, 2);
+    scene.add(dirLight4);
 
     // Add a point light inside keyhole
     keyholeLight = new THREE.PointLight(THEMES[currentTheme].primary, 3.5, 5, 1.5);
@@ -137,22 +151,22 @@ function createLock() {
     });
 
     const bronzeMaterial = new THREE.MeshStandardMaterial({
-        color: 0xcd7f32,
-        metalness: 0.95,
-        roughness: 0.22,
-        envMapIntensity: 1.2
+        color: 0xbb7f44,       // Bright metallic bronze #bb7f44
+        metalness: 0.85,       // High metalness for rich metallic reflection
+        roughness: 0.06,       // Very low roughness for sharp, brilliant specular highlights
+        envMapIntensity: 1.5
     });
 
     const brassMaterial = new THREE.MeshStandardMaterial({
         color: 0xdca818,
-        metalness: 0.85,
-        roughness: 0.2
+        metalness: 0.5,        // Lower metalness to preserve the rich yellow/gold base color
+        roughness: 0.15
     });
 
     const copperMaterial = new THREE.MeshStandardMaterial({
         color: 0xd47a55,
-        metalness: 0.9,
-        roughness: 0.15
+        metalness: 0.55,       // Lower metalness to preserve the rich copper base color
+        roughness: 0.12
     });
 
     const glowMaterial = new THREE.MeshBasicMaterial({
@@ -165,21 +179,21 @@ function createLock() {
     // --- 1. THE SHACKLE ---
     const shackleGroup = new THREE.Group();
     
-    const heelLegGeom = new THREE.CylinderGeometry(0.18, 0.18, 1.3, 16);
+    const heelLegGeom = new THREE.CylinderGeometry(0.18, 0.18, 1.9, 16); // Taller shackle heel leg
     const leftLeg = new THREE.Mesh(heelLegGeom, bronzeMaterial);
-    leftLeg.position.set(0, 0.65, 0); 
+    leftLeg.position.set(0, 0.95, 0); 
     leftLeg.castShadow = true;
     shackleGroup.add(leftLeg);
 
-    const toeLegGeom = new THREE.CylinderGeometry(0.18, 0.18, 0.7, 16);
+    const toeLegGeom = new THREE.CylinderGeometry(0.18, 0.18, 1.3, 16); // Taller shackle toe leg
     const rightLeg = new THREE.Mesh(toeLegGeom, bronzeMaterial);
-    rightLeg.position.set(2.6, 0.95, 0); 
+    rightLeg.position.set(2.6, 1.25, 0); 
     rightLeg.castShadow = true;
     shackleGroup.add(rightLeg);
 
     const shackleTorusGeom = new THREE.TorusGeometry(1.3, 0.18, 16, 64, Math.PI);
     const shackleTorus = new THREE.Mesh(shackleTorusGeom, bronzeMaterial);
-    shackleTorus.position.set(1.3, 1.3, 0);
+    shackleTorus.position.set(1.3, 1.9, 0); // Position torus at the top of the taller legs
     shackleTorus.castShadow = true;
     shackleGroup.add(shackleTorus);
 
@@ -320,9 +334,9 @@ function createLock() {
     });
 
     // --- 5. INTERNAL MECHANICS: LOCKING LATCH BOLT ---
-    const latchGeom = new THREE.BoxGeometry(0.55, 0.12, 0.16);
-    lockingLatch = new THREE.Mesh(latchGeom, chromeMaterial);
-    lockingLatch.position.set(0.85, 0.75, 0); 
+    const latchGeom = new THREE.BoxGeometry(0.75, 0.18, 0.22);
+    lockingLatch = new THREE.Mesh(latchGeom, bronzeMaterial);
+    lockingLatch.position.set(0.95, 0.75, 0); 
     pinsContainer.add(lockingLatch);
 
     // --- 6. INTERNAL MECHANICS: TWO SUBTLE INTERLOCKING GEARS ---
@@ -373,10 +387,10 @@ function createKey() {
     masterGroup.add(keyGroup); 
 
     const bronzeKeyMaterial = new THREE.MeshStandardMaterial({
-        color: 0xcd7f32,
-        metalness: 0.95,
-        roughness: 0.22,
-        envMapIntensity: 1.2
+        color: 0xbb7f44,       // Bright metallic bronze #bb7f44
+        metalness: 0.85,       // High metalness for rich metallic reflection
+        roughness: 0.06,       // Very low roughness for sharp, brilliant specular highlights
+        envMapIntensity: 1.5
     });
 
     const glowMaterial = new THREE.MeshBasicMaterial({
@@ -499,13 +513,13 @@ function startLockLoop() {
     });
 
     // 1. INITIAL STATE & FOCUS PREP
-    loopTimeline.set(camera.position, { x: 3.8, y: 2.2, z: 6.0 });
+    loopTimeline.set(camera.position, { x: 3.8, y: 1.8, z: 7.3 });
     loopTimeline.set(keyGroup.position, { x: 0, y: -0.04, z: 4.5 });
     loopTimeline.set(keyGroup.rotation, { x: 0, y: 0, z: 0 });
     loopTimeline.set(centralCore.rotation, { x: 0, y: 0, z: 0 });
     loopTimeline.set(shackleMesh.position, { x: -1.3, y: 0, z: 0 });
     loopTimeline.set(shackleMesh.rotation, { x: 0, y: 0, z: 0 });
-    loopTimeline.set(lockingLatch.position, { x: 0.85, y: 0.75, z: 0 }); 
+    loopTimeline.set(lockingLatch.position, { x: 0.95, y: 0.75, z: 0 }); 
     loopTimeline.set(gearB.rotation, { x: 0, y: 0, z: 0 });
     loopTimeline.set(keyholeLight, { intensity: 3.5, distance: 5 });
 
@@ -585,7 +599,7 @@ function startLockLoop() {
     }, '<');
 
     loopTimeline.to(lockingLatch.position, {
-        x: 0.35,
+        x: 0.40,
         duration: 1.2,
         ease: 'power2.inOut'
     }, '<');
@@ -643,7 +657,7 @@ function startLockLoop() {
     }, '<');
 
     loopTimeline.to(lockingLatch.position, {
-        x: 0.85, 
+        x: 0.95, 
         duration: 1.2,
         ease: 'power2.inOut'
     }, '<');
@@ -1176,7 +1190,7 @@ function initScrollTransitions() {
             if (keyGroup) keyGroup.rotation.z = angleZ;
             if (centralCore) centralCore.rotation.z = angleZ;
             if (gearB) gearB.rotation.z = -angleZ;
-            if (lockingLatch) lockingLatch.position.x = 0.85 - 0.5 * rotateProgress;
+            if (lockingLatch) lockingLatch.position.x = 0.95 - 0.55 * rotateProgress;
 
             // Pop shackle: progress from 0.7 to 1.0
             const shackleProgress = Math.max(0, Math.min((progress - 0.7) / 0.3, 1));
@@ -1200,54 +1214,6 @@ function initScrollTransitions() {
             if (loopTimeline && loopTimeline.paused()) {
                 loopTimeline.play();
             }
-        }
-    });
-
-    // Mobile Scroll Snapping Transition to eliminate empty space
-    let lastScrollY = window.scrollY;
-    let snapTimeout = null;
-    let isSnapping = false;
-
-    window.addEventListener('scroll', () => {
-        if (window.innerWidth > 768) return;
-        
-        const scrollY = window.scrollY;
-        const heroHeight = heroSection.offsetHeight;
-
-        // Reset snapping state if we reach snap destinations
-        if (scrollY === 0 || Math.abs(scrollY - heroHeight) < 5) {
-            isSnapping = false;
-        }
-
-        if (isSnapping) {
-            lastScrollY = scrollY;
-            return;
-        }
-
-        // Snap threshold zone (between top and start of next section)
-        if (scrollY > 25 && scrollY < heroHeight - 25) {
-            clearTimeout(snapTimeout);
-            snapTimeout = setTimeout(() => {
-                const nextSection = heroSection.nextElementSibling;
-                if (!nextSection) return;
-
-                isSnapping = true;
-                if (scrollY > lastScrollY) {
-                    // Scrolling down -> snap to next section
-                    nextSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    // Scrolling up -> snap to top
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-                lastScrollY = window.scrollY;
-                
-                // Release snap lock after 1 second to prevent getting stuck
-                setTimeout(() => {
-                    isSnapping = false;
-                }, 1000);
-            }, 60); // Small debounce to let user swipe natural distance
-        } else {
-            lastScrollY = scrollY;
         }
     });
 }

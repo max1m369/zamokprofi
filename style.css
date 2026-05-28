@@ -1196,7 +1196,7 @@ a {
 /* Text labels on map */
 .map-label {
     fill: var(--text-secondary);
-    font-size: 9px;
+    font-size: 30px;
     font-weight: 600;
     pointer-events: none;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
@@ -1247,7 +1247,7 @@ a {
 .map-status {
     fill: var(--accent-blue);
     font-family: var(--font-tech);
-    font-size: 10px;
+    font-size: 34px;
     font-weight: 500;
     text-anchor: middle;
     letter-spacing: 0.5px;
