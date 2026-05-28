@@ -1202,6 +1202,54 @@ function initScrollTransitions() {
             }
         }
     });
+
+    // Mobile Scroll Snapping Transition to eliminate empty space
+    let lastScrollY = window.scrollY;
+    let snapTimeout = null;
+    let isSnapping = false;
+
+    window.addEventListener('scroll', () => {
+        if (window.innerWidth > 768) return;
+        
+        const scrollY = window.scrollY;
+        const heroHeight = heroSection.offsetHeight;
+
+        // Reset snapping state if we reach snap destinations
+        if (scrollY === 0 || Math.abs(scrollY - heroHeight) < 5) {
+            isSnapping = false;
+        }
+
+        if (isSnapping) {
+            lastScrollY = scrollY;
+            return;
+        }
+
+        // Snap threshold zone (between top and start of next section)
+        if (scrollY > 25 && scrollY < heroHeight - 25) {
+            clearTimeout(snapTimeout);
+            snapTimeout = setTimeout(() => {
+                const nextSection = heroSection.nextElementSibling;
+                if (!nextSection) return;
+
+                isSnapping = true;
+                if (scrollY > lastScrollY) {
+                    // Scrolling down -> snap to next section
+                    nextSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    // Scrolling up -> snap to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                lastScrollY = window.scrollY;
+                
+                // Release snap lock after 1 second to prevent getting stuck
+                setTimeout(() => {
+                    isSnapping = false;
+                }, 1000);
+            }, 60); // Small debounce to let user swipe natural distance
+        } else {
+            lastScrollY = scrollY;
+        }
+    });
 }
 
 
