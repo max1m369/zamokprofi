@@ -334,7 +334,7 @@ a {
     height: calc(100vh - 1.5rem);
     height: calc(100dvh - 1.5rem);
     overflow: hidden;
-    padding: 1rem;
+    padding: 1rem 0.75rem; /* Reduced horizontal padding to give more room on small screens */
     background: rgba(9, 17, 36, 0.2);
     border: 1px solid rgba(0, 240, 255, 0.05);
     border-radius: 24px;
@@ -348,7 +348,7 @@ a {
     flex-direction: column;
     width: 100%;
     height: 100%;
-    gap: 0.5rem;
+    gap: 1.2rem; /* Increased gap to push elements closer together with a unified flow */
     justify-content: space-between;
 }
 
@@ -361,15 +361,15 @@ a {
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    gap: 0.6rem;
+    gap: 1rem; /* Increased gap for a more premium spacing */
 }
 
 .hero-canvas-wrapper {
     position: relative;
     width: 100%;
-    height: 28vh;
-    min-height: 120px;
-    max-height: 230px;
+    height: 38vh; /* Increased from 28vh to enlarge 3D lock animation */
+    min-height: 160px; /* Increased from 120px */
+    max-height: 320px; /* Increased from 230px */
     order: -1;
     border-radius: 16px;
     overflow: hidden;
@@ -447,7 +447,7 @@ a {
 }
 
 .hero-title {
-    font-size: 1.75rem;
+    font-size: 2.05rem; /* Increased from 1.75rem to look more impactful and fill the screen */
     font-weight: 900;
     line-height: 1.15;
     text-transform: uppercase;
@@ -463,7 +463,7 @@ a {
 
 .hero-subtitle {
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.9rem; /* Increased from 0.85rem */
     font-weight: 500;
     letter-spacing: 0.5px;
     text-align: center;
@@ -522,40 +522,48 @@ a {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    gap: 0.4rem;
+    gap: 0.45rem; /* Slightly larger gap */
 }
 
 .badge-pill {
     flex: 1;
-    background: rgba(9, 17, 36, 0.5);
-    border: 1px solid rgba(0, 132, 255, 0.1);
-    border-radius: 8px;
-    padding: 0.35rem 0.25rem;
+    background: rgba(9, 17, 36, 0.55);
+    border: 1px solid rgba(0, 240, 255, 0.15); /* Sleeker neon border */
+    border-radius: 12px; /* Increased from 8px for modern rounded feel */
+    padding: 0.6rem 0.35rem; /* Substantially increased padding to look prominent and fill the space */
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
+    gap: 0.35rem; /* Larger gap inside pill */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: var(--transition-fast);
+}
+
+.badge-pill:hover {
+    border-color: rgba(0, 240, 255, 0.35);
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.1);
+    transform: translateY(-1px);
 }
 
 .badge-icon {
-    font-size: 0.95rem;
+    font-size: 1.35rem; /* Increased from 0.95rem for clear visual presentation */
 }
 
 .badge-info {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 .badge-title {
-    font-size: 0.6rem;
+    font-size: 0.68rem; /* Increased from 0.6rem for readability */
     color: var(--text-secondary);
 }
 
 .badge-desc {
-    font-size: 0.65rem;
-    font-weight: 700;
+    font-size: 0.75rem; /* Increased from 0.65rem for main informer text */
+    font-weight: 800;
 }
 
 /* Hero Actions */
@@ -564,7 +572,7 @@ a {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.8rem; /* Increased gap */
 }
 
 .phone-block {
@@ -644,9 +652,9 @@ a {
 }
 
 .msg-btn {
-    padding: 0.65rem;
+    padding: 0.75rem; /* Increased from 0.65rem to match larger buttons */
     border-radius: 8px;
-    font-size: 0.75rem;
+    font-size: 0.8rem; /* Increased from 0.75rem */
     font-weight: 700;
     text-align: center;
     transition: var(--transition-fast);
@@ -698,11 +706,11 @@ a {
 .btn {
     position: relative;
     width: 100%;
-    padding: 0.9rem;
+    padding: 0.95rem; /* Increased from 0.9rem to feel more premium and fit mobile touch targets */
     border-radius: 10px;
     font-family: var(--font-primary);
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.9rem; /* Increased from 0.85rem */
     letter-spacing: 0.8px;
     border: none;
     cursor: pointer;
@@ -1159,7 +1167,7 @@ a {
     stroke: rgba(0, 240, 255, 0.2);
     stroke-width: 1.5;
     transition: all 0.3s ease;
-    cursor: pointer;
+    cursor: default; /* Changed from pointer since click-to-call is removed */
 }
 
 .map-district:hover {
@@ -1199,7 +1207,7 @@ a {
 
 /* Suburb styling */
 .map-suburb {
-    cursor: pointer;
+    cursor: default; /* Changed from pointer since click-to-call is removed */
 }
 
 .suburb-dot {
@@ -2198,6 +2206,7 @@ select.form-input option {
 .problem-card:hover .problem-icon-wrapper.icon-gold svg {
     filter: drop-shadow(0 0 8px #ffd200);
     stroke: #ffd200;
+}
 .problem-card-full {
     grid-column: span 1;
 }
@@ -2254,10 +2263,412 @@ select.form-input option {
 
 .problems-cta p {
     font-family: var(--font-primary);
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: #00f0ff;
-    text-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
     letter-spacing: 0.5px;
 }
 
+.problems-cta p span.cta-blue {
+    color: #00d2ff;
+    text-shadow: 0 0 12px rgba(0, 210, 255, 0.5);
+}
+
+.problems-cta p span.cta-teal {
+    color: #00ffd2;
+    text-shadow: 0 0 12px rgba(0, 255, 210, 0.5);
+}
+
+
+
+/* ==========================================
+   GALLERY SECTION (OUR WORKS)
+   ========================================== */
+.gallery-section {
+    position: relative;
+    padding-bottom: 3rem;
+    background: rgba(5, 15, 30, 0.4);
+    border-top: 1px solid rgba(0, 240, 255, 0.05);
+    border-bottom: 1px solid rgba(0, 240, 255, 0.05);
+}
+
+.section-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: -0.5rem;
+    margin-bottom: 2rem;
+    opacity: 0.8;
+}
+
+.gallery-slider-wrapper {
+    position: relative;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.gallery-slider-container {
+    display: flex;
+    gap: 1.2rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 10px 5px;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+    width: 100%;
+}
+
+.gallery-slider-container::-webkit-scrollbar {
+    display: none; /* WebKit */
+}
+
+.gallery-slide-card {
+    flex: 0 0 280px; /* Width of card on mobile */
+    scroll-snap-align: start;
+    background: rgba(10, 25, 50, 0.6);
+    border: 1px solid rgba(0, 240, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                border-color 0.3s ease, 
+                box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.gallery-slide-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 240, 255, 0.3);
+    box-shadow: 0 12px 40px 0 rgba(0, 240, 255, 0.15);
+}
+
+.gallery-img-container {
+    height: 380px; /* Premium height for photos */
+    overflow: hidden;
+    position: relative;
+    background: #060d1a;
+}
+
+.gallery-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.gallery-zoom-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 15, 30, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-zoom-overlay .zoom-icon {
+    font-size: 2rem;
+    color: #fff;
+    filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.8));
+    transform: scale(0.8);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.gallery-slide-card:hover .gallery-zoom-overlay {
+    opacity: 1;
+}
+
+.gallery-slide-card:hover .gallery-img-container img {
+    transform: scale(1.06);
+}
+
+.gallery-slide-card:hover .gallery-zoom-overlay .zoom-icon {
+    transform: scale(1);
+}
+
+.gallery-caption {
+    padding: 1.1rem;
+    background: linear-gradient(180deg, rgba(8, 20, 40, 0.9) 0%, rgba(5, 10, 20, 0.95) 100%);
+    border-top: 1px solid rgba(0, 240, 255, 0.05);
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-caption p {
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+
+/* Nav Buttons */
+.gallery-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(10, 25, 50, 0.8);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    color: #00f0ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.gallery-slider-wrapper:hover .gallery-nav-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.gallery-nav-btn:hover {
+    background: #00f0ff;
+    color: #050f20;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+    border-color: #00f0ff;
+}
+
+.prev-btn {
+    left: -10px;
+}
+
+.next-btn {
+    right: -10px;
+}
+
+/* Pagination Dots */
+.gallery-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+}
+
+.gallery-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(0, 240, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.gallery-dot.active {
+    width: 24px;
+    border-radius: 4px;
+    background: #00f0ff;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+/* Lightbox Modal */
+.lightbox-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(3, 8, 16, 0.92);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.lightbox-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lightbox-modal.active .lightbox-content {
+    transform: scale(1);
+}
+
+.lightbox-img {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    border: 1px solid rgba(0, 240, 255, 0.15);
+}
+
+.lightbox-caption {
+    margin-top: 1.2rem;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.4;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    background: rgba(10, 25, 50, 0.6);
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 240, 255, 0.08);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: -45px;
+    right: 0;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 2.2rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.lightbox-close:hover {
+    color: #00f0ff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .gallery-slider-container {
+        gap: 1rem;
+    }
+    
+    .gallery-slide-card {
+        flex: 0 0 260px;
+    }
+    
+    .gallery-img-container {
+        height: 340px;
+    }
+    
+    .gallery-nav-btn {
+        display: none;
+    }
+    
+    .gallery-slider-wrapper {
+        padding: 0 0.5rem;
+    }
+}
+
+
+/* ==========================================
+   HERO SCROLL-TRANSITION & MOBILE TWEAKS
+   ========================================== */
+.scroll-indicator {
+    position: absolute;
+    bottom: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 36px;
+    color: #00f0ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    animation: pulseScroll 2s infinite;
+    filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.6));
+    pointer-events: auto;
+    transition: opacity 0.3s ease;
+}
+
+.scroll-indicator svg {
+    width: 28px;
+    height: 28px;
+}
+
+@keyframes pulseScroll {
+    0% {
+        transform: translate(-50%, 0);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translate(-50%, 8px);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, 0);
+        opacity: 0.3;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-container {
+        justify-content: center !important;
+        gap: 0.4rem !important; /* Make 3D lock and title stick together */
+    }
+    
+    .hero-foreground {
+        gap: 0.8rem !important;
+    }
+    
+    .hero-canvas-wrapper {
+        height: 35vh !important; /* Slightly reduce height to ensure everything fits the screen */
+        max-height: 280px !important;
+        margin-bottom: -0.5rem !important; /* Pull content closer */
+    }
+    
+    /* Enlarged premium mobile badge pills */
+    .hero-badges {
+        gap: 0.5rem !important;
+        margin: 0.2rem 0 !important;
+    }
+    
+    .badge-pill {
+        padding: 0.75rem 0.45rem !important;
+        background: rgba(9, 17, 36, 0.75) !important;
+        border: 1px solid rgba(0, 240, 255, 0.28) !important;
+        border-radius: 14px !important;
+        gap: 0.45rem !important;
+        box-shadow: 0 4px 20px rgba(0, 240, 255, 0.08) !important;
+    }
+    
+    .badge-icon {
+        font-size: 1.55rem !important;
+    }
+    
+    .badge-title {
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+    }
+    
+    .badge-desc {
+        font-size: 0.82rem !important;
+        font-weight: 800 !important;
+    }
+}

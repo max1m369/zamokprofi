@@ -972,14 +972,238 @@ function initMapInteractivity() {
             statusText.style.fill = isAdjacent ? '#ffd200' : '#00f0ff';
         });
         d.addEventListener('mouseleave', () => {
-            statusText.textContent = 'Выберите район для вызова мастера';
+            statusText.textContent = 'Районы обслуживания (СЗАО и МО)';
             statusText.style.fill = '';
         });
-        d.addEventListener('click', () => {
-            window.location.href = 'tel:+79296698855';
-        });
+        // Click-to-call interactivity removed from map contours as requested
     });
 }
+
+
+// Premium Gallery Slider & Lightbox
+function initGallerySlider() {
+    const slider = document.getElementById('gallery-slider');
+    const dotsContainer = document.getElementById('gallery-dots');
+    const prevBtn = document.getElementById('gallery-prev');
+    const nextBtn = document.getElementById('gallery-next');
+    const cards = slider.querySelectorAll('.gallery-slide-card');
+    
+    if (!slider || cards.length === 0) return;
+    
+    const totalCards = cards.length;
+    
+    // Create pagination dots
+    for (let i = 0; i < totalCards; i++) {
+        const dot = document.createElement('div');
+        dot.classList.add('gallery-dot');
+        if (i === 0) dot.classList.add('active');
+        dot.addEventListener('click', () => {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = parseFloat(window.getComputedStyle(slider).gap) || 16;
+            slider.scrollTo({
+                left: i * (cardWidth + gap),
+                behavior: 'smooth'
+            });
+        });
+        dotsContainer.appendChild(dot);
+    }
+    
+    const dots = dotsContainer.querySelectorAll('.gallery-dot');
+    
+    // Update dots on scroll
+    let isScrolling;
+    slider.addEventListener('scroll', () => {
+        window.clearTimeout(isScrolling);
+        isScrolling = setTimeout(() => {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = parseFloat(window.getComputedStyle(slider).gap) || 16;
+            const index = Math.round(slider.scrollLeft / (cardWidth + gap));
+            
+            dots.forEach(d => d.classList.remove('active'));
+            if (dots[index]) {
+                dots[index].classList.add('active');
+            }
+        }, 100);
+    });
+    
+    // Navigation arrows
+    if (prevBtn && nextBtn) {
+        prevBtn.addEventListener('click', () => {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = parseFloat(window.getComputedStyle(slider).gap) || 16;
+            slider.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            const cardWidth = cards[0].offsetWidth;
+            const gap = parseFloat(window.getComputedStyle(slider).gap) || 16;
+            slider.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+        });
+    }
+    
+    // Lightbox modal functionality
+    const modal = document.getElementById('lightbox-modal');
+    const modalImg = document.getElementById('lightbox-img');
+    const modalCaption = document.getElementById('lightbox-caption');
+    const closeBtn = document.getElementById('lightbox-close');
+    
+    if (modal && modalImg && modalCaption) {
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const img = card.querySelector('img');
+                const caption = card.querySelector('.gallery-caption p');
+                
+                if (img) {
+                    modalImg.src = img.src;
+                    modalImg.alt = img.alt;
+                    modalCaption.textContent = caption ? caption.textContent : '';
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden'; // prevent page scroll
+                }
+            });
+        });
+        
+        const closeModal = () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            // Clear source after fade out to prevent flashing
+            setTimeout(() => {
+                modalImg.src = '';
+            }, 300);
+        };
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeModal);
+        }
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.classList.contains('lightbox-content')) {
+                closeModal();
+            }
+        });
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+    }
+}
+
+
+
+// Premium Scroll-Driven 3D Lock Unlocking & Split Reveal Transition
+function initScrollTransitions() {
+    const heroSection = document.querySelector('.hero-section');
+    const textContent = document.querySelector('.hero-text-content');
+    const badges = document.querySelector('.hero-badges');
+    const actions = document.querySelector('.hero-actions');
+    const canvasWrapper = document.querySelector('.hero-canvas-wrapper');
+    const scrollIndicator = document.getElementById('scroll-indicator');
+
+    if (!heroSection) return;
+
+    // Scroll Indicator Click Handler
+    if (scrollIndicator) {
+        scrollIndicator.addEventListener('click', () => {
+            const nextSection = heroSection.nextElementSibling;
+            if (nextSection) {
+                nextSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+
+    // Scroll driven interactive lock opening & layout disassembly
+    window.addEventListener('scroll', () => {
+        const scrollY = window.scrollY;
+        
+        // Max scroll depth for transition (approx 1st viewport)
+        const maxScroll = 350;
+        const progress = Math.min(scrollY / maxScroll, 1);
+
+        if (progress > 0) {
+            // 1. DISASSEMBLE LAYOUT (Layout splits apart metaphorically like lock plates opening)
+            if (textContent) {
+                textContent.style.transform = `translateX(${-140 * progress}px)`;
+                textContent.style.opacity = 1 - progress * 1.5;
+            }
+            if (badges) {
+                badges.style.transform = `translateX(${-90 * progress}px)`;
+                badges.style.opacity = 1 - progress * 1.5;
+            }
+            if (actions) {
+                actions.style.transform = `translateX(${140 * progress}px)`;
+                actions.style.opacity = 1 - progress * 1.5;
+            }
+            if (canvasWrapper) {
+                canvasWrapper.style.transform = `translateY(${-70 * progress}px) scale(${1 - 0.12 * progress})`;
+                canvasWrapper.style.opacity = 1 - progress * 1.3;
+            }
+            if (scrollIndicator) {
+                scrollIndicator.style.opacity = 1 - progress * 3;
+            }
+
+            // 2. 3D LOCK UNLOCKING
+            // Pause loop animation while scrolling
+            if (loopTimeline) {
+                loopTimeline.pause();
+            }
+
+            // Insert key: progress from 0.0 to 0.4
+            const insertProgress = Math.min(progress / 0.4, 1);
+            if (keyGroup) {
+                keyGroup.position.z = 4.5 - 3.85 * insertProgress; // 4.5 is locked, 0.65 is inserted
+            }
+
+            // Align pins during insertion
+            keyPins.forEach((kp, idx) => {
+                const delta = kp.userData.targetDelta;
+                kp.position.y = kp.userData.initialY + delta * insertProgress;
+            });
+            driverPins.forEach((dp, idx) => {
+                const delta = dp.userData.targetDelta;
+                dp.position.y = dp.userData.initialY + delta * insertProgress;
+            });
+            pinSprings.forEach((spring, idx) => {
+                const delta = keyPins[idx].userData.targetDelta;
+                const scaleFactor = (0.4 - delta * insertProgress) / 0.4;
+                spring.mesh.scale.y = scaleFactor;
+            });
+
+            // Rotate key and core: progress from 0.4 to 0.7
+            const rotateProgress = Math.max(0, Math.min((progress - 0.4) / 0.3, 1));
+            const angleZ = rotateProgress * (Math.PI / 2);
+            if (keyGroup) keyGroup.rotation.z = angleZ;
+            if (centralCore) centralCore.rotation.z = angleZ;
+            if (gearB) gearB.rotation.z = -angleZ;
+            if (lockingLatch) lockingLatch.position.x = 0.85 - 0.5 * rotateProgress;
+
+            // Pop shackle: progress from 0.7 to 1.0
+            const shackleProgress = Math.max(0, Math.min((progress - 0.7) / 0.3, 1));
+            if (shackleMesh) {
+                shackleMesh.position.y = 0.8 * shackleProgress;
+                shackleMesh.rotation.y = (Math.PI / 3.5) * shackleProgress;
+            }
+            if (keyholeLight) {
+                keyholeLight.intensity = 3.5 + 2.0 * shackleProgress;
+                keyholeLight.distance = 5 + 2 * shackleProgress;
+            }
+        } else {
+            // 3. RESET TO ANIMATING LOOP (when user is at the top of the page)
+            if (textContent) { textContent.style.transform = ''; textContent.style.opacity = ''; }
+            if (badges) { badges.style.transform = ''; badges.style.opacity = ''; }
+            if (actions) { actions.style.transform = ''; actions.style.opacity = ''; }
+            if (canvasWrapper) { canvasWrapper.style.transform = ''; canvasWrapper.style.opacity = ''; }
+            if (scrollIndicator) { scrollIndicator.style.opacity = ''; }
+            
+            // Resume infinite GSAP loop
+            if (loopTimeline && loopTimeline.paused()) {
+                loopTimeline.play();
+            }
+        }
+    });
+}
+
 
 // Window OnLoad Initializer
 window.addEventListener('load', () => {
@@ -989,5 +1213,7 @@ window.addEventListener('load', () => {
     initFloatingBar();
     initServicesAccordion();
     initMapInteractivity();
+    initGallerySlider();
+    initScrollTransitions();
     animate();
 });
