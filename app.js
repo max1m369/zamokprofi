@@ -1219,6 +1219,33 @@ function initScrollTransitions() {
 }
 
 
+function initDisclaimerModal() {
+    const link = document.getElementById('disclaimer-link');
+    const modal = document.getElementById('disclaimer-modal');
+    const closeBtn = document.getElementById('disclaimer-close-btn');
+
+    if (link && modal && closeBtn) {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+}
+
 // Window OnLoad Initializer
 window.addEventListener('load', () => {
     initThree();
@@ -1229,5 +1256,6 @@ window.addEventListener('load', () => {
     initMapInteractivity();
     initGallerySlider();
     initScrollTransitions();
+    initDisclaimerModal();
     animate();
 });
