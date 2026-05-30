@@ -774,6 +774,8 @@ a {
     color: #000000;
     font-weight: 800;
     box-shadow: 0 4px 20px rgba(0, 245, 160, 0.25);
+    border: 2px solid transparent;
+    transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, transform 0.2s ease;
 }
 
 .btn-mint:hover {
@@ -785,6 +787,20 @@ a {
 
 .btn-mint:active {
     transform: translateY(0);
+}
+
+.btn-mint.btn-flipped {
+    background: transparent;
+    border-color: #00f5a0;
+    color: #00f5a0;
+    box-shadow: 0 0 20px rgba(0, 245, 160, 0.4);
+}
+
+.btn-mint.btn-flipped:hover {
+    background: rgba(0, 245, 160, 0.08);
+    border-color: #00ffaa;
+    color: #00ffaa;
+    box-shadow: 0 0 25px rgba(0, 245, 160, 0.6);
 }
 
 .pulse-btn {
@@ -1980,15 +1996,15 @@ select.form-input option {
 @keyframes button-neon-signal {
     0% {
         box-shadow: 0 0 15px rgba(0, 245, 160, 0.6), 0 0 0 0px rgba(0, 245, 160, 0.4), 0 4px 15px rgba(0, 0, 0, 0.4);
-        transform: scale(1);
+        transform: translateY(0) scale(1);
     }
     50% {
         box-shadow: 0 0 30px rgba(0, 245, 160, 0.9), 0 0 0 12px rgba(0, 245, 160, 0), 0 6px 20px rgba(0, 245, 160, 0.3);
-        transform: scale(1.06);
+        transform: translateY(-8px) scale(1.06);
     }
     100% {
         box-shadow: 0 0 15px rgba(0, 245, 160, 0.6), 0 0 0 0px rgba(0, 245, 160, 0), 0 4px 15px rgba(0, 0, 0, 0.4);
-        transform: scale(1);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -2051,12 +2067,15 @@ select.form-input option {
 @keyframes button-neon-signal-mobile {
     0% {
         box-shadow: 0 0 15px rgba(0, 245, 160, 0.7), 0 0 0 0px rgba(0, 245, 160, 0.4), 0 8px 25px rgba(0, 0, 0, 0.5);
+        transform: translateY(0);
     }
     50% {
         box-shadow: 0 0 35px rgba(0, 245, 160, 1.0), 0 0 0 15px rgba(0, 245, 160, 0), 0 8px 25px rgba(0, 0, 0, 0.5);
+        transform: translateY(-5px);
     }
     100% {
         box-shadow: 0 0 15px rgba(0, 245, 160, 0.7), 0 0 0 0px rgba(0, 245, 160, 0), 0 8px 25px rgba(0, 0, 0, 0.5);
+        transform: translateY(0);
     }
 }
 

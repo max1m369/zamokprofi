@@ -1300,6 +1300,27 @@ function initCookieWarning() {
     }
 }
 
+function initHeroCallButtonAnimation() {
+    const btn = document.getElementById('call-master-btn');
+    if (!btn) return;
+    
+    const textSpan = btn.querySelector('.btn-text');
+    if (!textSpan) return;
+    
+    let showPhone = false;
+    
+    setInterval(() => {
+        showPhone = !showPhone;
+        if (showPhone) {
+            textSpan.textContent = '+7 (929) 669-88-55';
+            btn.classList.add('btn-flipped');
+        } else {
+            textSpan.textContent = 'СВЯЗАТЬСЯ С МАСТЕРОМ';
+            btn.classList.remove('btn-flipped');
+        }
+    }, 2000);
+}
+
 // Window OnLoad Initializer
 window.addEventListener('load', () => {
     initThree();
@@ -1313,5 +1334,6 @@ window.addEventListener('load', () => {
     initDisclaimerModal();
     initPrivacyModal();
     initCookieWarning();
+    initHeroCallButtonAnimation();
     animate();
 });
