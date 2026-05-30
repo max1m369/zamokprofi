@@ -558,12 +558,13 @@ a {
 
 .badge-title {
     font-size: 0.68rem; /* Increased from 0.6rem for readability */
-    color: var(--text-secondary);
+    color: #ffffff;
 }
 
 .badge-desc {
     font-size: 0.75rem; /* Increased from 0.65rem for main informer text */
     font-weight: 800;
+    color: #ffffff;
 }
 
 /* Hero Actions */
@@ -2287,9 +2288,11 @@ select.form-input option {
    ========================================== */
 .gallery-section {
     position: relative;
+    margin-top: -1.5rem; /* Lift up the block to sit closer to accordion card */
+    padding-top: 5rem; /* Pushes the title down inside the card block to give it breathing room */
     padding-bottom: 3rem;
     background: rgba(5, 15, 30, 0.4);
-    border-top: 1px solid rgba(0, 240, 255, 0.05);
+    border-top: none !important; /* Explicitly ensure no top border line is shown */
     border-bottom: 1px solid rgba(0, 240, 255, 0.05);
 }
 
@@ -2672,5 +2675,83 @@ select.form-input option {
     .badge-desc {
         font-size: 0.82rem !important;
         font-weight: 800 !important;
+    }
+}
+
+/* ==========================================================================
+   COOKIE BANNER STYLE (SCIFI GLASSMORPHISM)
+   ========================================================================== */
+.cookie-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    width: calc(100% - 40px);
+    max-width: 550px;
+    background: rgba(9, 17, 36, 0.95);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 240, 255, 0.18);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    z-index: 10000;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+    opacity: 0;
+}
+
+.cookie-banner.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.cookie-content {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.cookie-icon {
+    font-size: 1.5rem;
+}
+
+.cookie-text {
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    line-height: 1.45;
+    text-align: left;
+}
+
+.cookie-text a {
+    color: var(--accent-blue);
+    text-decoration: underline;
+    transition: var(--transition-fast);
+}
+
+.cookie-text a:hover {
+    color: #ffffff;
+}
+
+#accept-cookies-btn {
+    padding: 0.5rem 1.2rem;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 576px) {
+    .cookie-banner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        bottom: 80px; /* Position it above the mobile floating call bar */
+    }
+    
+    #accept-cookies-btn {
+        width: 100%;
+        text-align: center;
     }
 }

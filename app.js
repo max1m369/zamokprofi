@@ -1246,6 +1246,60 @@ function initDisclaimerModal() {
     }
 }
 
+function initPrivacyModal() {
+    const link = document.getElementById('privacy-link');
+    const cookieLink = document.getElementById('cookie-privacy-link');
+    const modal = document.getElementById('privacy-modal');
+    const closeBtn = document.getElementById('privacy-close-btn');
+
+    if (modal && closeBtn) {
+        const openModal = (e) => {
+            e.preventDefault();
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        };
+
+        if (link) link.addEventListener('click', openModal);
+        if (cookieLink) cookieLink.addEventListener('click', openModal);
+
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+
+        closeBtn.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+}
+
+function initCookieWarning() {
+    const banner = document.getElementById('cookie-banner');
+    const acceptBtn = document.getElementById('accept-cookies-btn');
+
+    if (banner && acceptBtn) {
+        const consent = localStorage.getItem('cookieConsent');
+        if (!consent) {
+            banner.classList.remove('hidden');
+            setTimeout(() => {
+                banner.classList.add('visible');
+            }, 100);
+        }
+
+        acceptBtn.addEventListener('click', () => {
+            localStorage.setItem('cookieConsent', 'true');
+            banner.classList.remove('visible');
+            setTimeout(() => {
+                banner.classList.add('hidden');
+            }, 500);
+        });
+    }
+}
+
 // Window OnLoad Initializer
 window.addEventListener('load', () => {
     initThree();
@@ -1257,5 +1311,7 @@ window.addEventListener('load', () => {
     initGallerySlider();
     initScrollTransitions();
     initDisclaimerModal();
+    initPrivacyModal();
+    initCookieWarning();
     animate();
 });
